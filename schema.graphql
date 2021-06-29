@@ -6,6 +6,7 @@ type User {
   name: String
   email: String
   password: PasswordState
+  role: Role
   authoredPosts(
     where: PostWhereInput! = {}
     search: String
@@ -86,6 +87,8 @@ input UserWhereInput {
   email_in: [String]
   email_not_in: [String]
   password_is_set: Boolean
+  role: RoleWhereInput
+  role_is_null: Boolean
 
   """
    condition must be true for all nodes
@@ -131,7 +134,15 @@ input UserUpdateInput {
   name: String
   email: String
   password: String
+  role: RoleRelateToOneInput
   authoredPosts: PostRelateToManyInput
+}
+
+input RoleRelateToOneInput {
+  create: RoleCreateInput
+  connect: RoleWhereUniqueInput
+  disconnect: RoleWhereUniqueInput
+  disconnectAll: Boolean
 }
 
 input PostRelateToManyInput {
@@ -150,11 +161,146 @@ input UserCreateInput {
   name: String
   email: String
   password: String
+  role: RoleRelateToOneInput
   authoredPosts: PostRelateToManyInput
 }
 
 input UsersCreateInput {
   data: UserCreateInput
+}
+
+"""
+ A keystone list
+"""
+type Role {
+  id: ID!
+  name: String
+  canManageContent: Boolean
+  canManageUsers: Boolean
+  users(
+    where: UserWhereInput! = {}
+    search: String
+    sortBy: [SortUsersBy!]
+      @deprecated(reason: "sortBy has been deprecated in favour of orderBy")
+    orderBy: [UserOrderByInput!]! = []
+    first: Int
+    skip: Int! = 0
+  ): [User!]
+  _usersMeta(
+    where: UserWhereInput! = {}
+    search: String
+    sortBy: [SortUsersBy!]
+      @deprecated(reason: "sortBy has been deprecated in favour of orderBy")
+    orderBy: [UserOrderByInput!]! = []
+    first: Int
+    skip: Int! = 0
+  ): _QueryMeta
+    @deprecated(
+      reason: "This query will be removed in a future version. Please use usersCount instead."
+    )
+  usersCount(where: UserWhereInput! = {}): Int
+}
+
+input RoleWhereInput {
+  AND: [RoleWhereInput!]
+  OR: [RoleWhereInput!]
+  id: ID
+  id_not: ID
+  id_lt: ID
+  id_lte: ID
+  id_gt: ID
+  id_gte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  name: String
+  name_not: String
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  name_i: String
+  name_not_i: String
+  name_contains_i: String
+  name_not_contains_i: String
+  name_starts_with_i: String
+  name_not_starts_with_i: String
+  name_ends_with_i: String
+  name_not_ends_with_i: String
+  name_in: [String]
+  name_not_in: [String]
+  canManageContent: Boolean
+  canManageContent_not: Boolean
+  canManageUsers: Boolean
+  canManageUsers_not: Boolean
+
+  """
+   condition must be true for all nodes
+  """
+  users_every: UserWhereInput
+
+  """
+   condition must be true for at least 1 node
+  """
+  users_some: UserWhereInput
+
+  """
+   condition must be false for all nodes
+  """
+  users_none: UserWhereInput
+}
+
+input RoleWhereUniqueInput {
+  id: ID
+}
+
+enum SortRolesBy {
+  id_ASC
+  id_DESC
+  name_ASC
+  name_DESC
+  canManageContent_ASC
+  canManageContent_DESC
+  canManageUsers_ASC
+  canManageUsers_DESC
+}
+
+input RoleOrderByInput {
+  id: OrderDirection
+  name: OrderDirection
+  canManageContent: OrderDirection
+  canManageUsers: OrderDirection
+}
+
+input RoleUpdateInput {
+  name: String
+  canManageContent: Boolean
+  canManageUsers: Boolean
+  users: UserRelateToManyInput
+}
+
+input UserRelateToManyInput {
+  create: [UserCreateInput]
+  connect: [UserWhereUniqueInput]
+  disconnect: [UserWhereUniqueInput]
+  disconnectAll: Boolean
+}
+
+input RolesUpdateInput {
+  id: ID!
+  data: RoleUpdateInput
+}
+
+input RoleCreateInput {
+  name: String
+  canManageContent: Boolean
+  canManageUsers: Boolean
+  users: UserRelateToManyInput
+}
+
+input RolesCreateInput {
+  data: RoleCreateInput
 }
 
 """
@@ -330,6 +476,36 @@ type Mutation {
   deleteUsers(ids: [ID!]): [User]
 
   """
+   Create a single Role item.
+  """
+  createRole(data: RoleCreateInput): Role
+
+  """
+   Create multiple Role items.
+  """
+  createRoles(data: [RolesCreateInput]): [Role]
+
+  """
+   Update a single Role item by ID.
+  """
+  updateRole(id: ID!, data: RoleUpdateInput): Role
+
+  """
+   Update multiple Role items by ID.
+  """
+  updateRoles(data: [RolesUpdateInput]): [Role]
+
+  """
+   Delete a single Role item by ID.
+  """
+  deleteRole(id: ID!): Role
+
+  """
+   Delete multiple Role items by ID.
+  """
+  deleteRoles(ids: [ID!]): [Role]
+
+  """
    Create a single Post item.
   """
   createPost(data: PostCreateInput): Post
@@ -358,6 +534,44 @@ type Mutation {
    Delete multiple Post items by ID.
   """
   deletePosts(ids: [ID!]): [Post]
+  authenticateUserWithPassword(
+    email: String!
+    password: String!
+  ): UserAuthenticationWithPasswordResult!
+  createInitialUser(
+    data: CreateInitialUserInput!
+  ): UserAuthenticationWithPasswordSuccess!
+  endSession: Boolean!
+}
+
+union AuthenticatedItem = User
+
+union UserAuthenticationWithPasswordResult =
+    UserAuthenticationWithPasswordSuccess
+  | UserAuthenticationWithPasswordFailure
+
+type UserAuthenticationWithPasswordSuccess {
+  sessionToken: String!
+  item: User!
+}
+
+type UserAuthenticationWithPasswordFailure {
+  code: PasswordAuthErrorCode!
+  message: String!
+}
+
+enum PasswordAuthErrorCode {
+  FAILURE
+  IDENTITY_NOT_FOUND
+  SECRET_NOT_SET
+  MULTIPLE_IDENTITY_MATCHES
+  SECRET_MISMATCH
+}
+
+input CreateInitialUserInput {
+  name: String
+  email: String
+  password: String
 }
 
 type Query {
@@ -397,6 +611,41 @@ type Query {
   usersCount(where: UserWhereInput! = {}): Int
 
   """
+   Search for all Role items which match the where clause.
+  """
+  allRoles(
+    where: RoleWhereInput! = {}
+    search: String
+    sortBy: [SortRolesBy!]
+      @deprecated(reason: "sortBy has been deprecated in favour of orderBy")
+    orderBy: [RoleOrderByInput!]! = []
+    first: Int
+    skip: Int! = 0
+  ): [Role!]
+
+  """
+   Search for the Role item with the matching ID.
+  """
+  Role(where: RoleWhereUniqueInput!): Role
+
+  """
+   Perform a meta-query on all Role items which match the where clause.
+  """
+  _allRolesMeta(
+    where: RoleWhereInput! = {}
+    search: String
+    sortBy: [SortRolesBy!]
+      @deprecated(reason: "sortBy has been deprecated in favour of orderBy")
+    orderBy: [RoleOrderByInput!]! = []
+    first: Int
+    skip: Int! = 0
+  ): _QueryMeta
+    @deprecated(
+      reason: "This query will be removed in a future version. Please use rolesCount instead."
+    )
+  rolesCount(where: RoleWhereInput! = {}): Int
+
+  """
    Search for all Post items which match the where clause.
   """
   allPosts(
@@ -430,6 +679,7 @@ type Query {
       reason: "This query will be removed in a future version. Please use postsCount instead."
     )
   postsCount(where: PostWhereInput! = {}): Int
+  authenticatedItem: AuthenticatedItem
   keystone: KeystoneMeta!
 }
 

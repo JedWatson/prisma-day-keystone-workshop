@@ -13,7 +13,19 @@ model User {
   name          String?
   email         String?
   password      String?
+  role          Role?   @relation("User_role", fields: [roleId], references: [id])
+  roleId        String? @map("role")
   authoredPosts Post[]  @relation("Post_author")
+
+  @@index([roleId])
+}
+
+model Role {
+  id               String   @id @default(cuid())
+  name             String?
+  canManageContent Boolean?
+  canManageUsers   Boolean?
+  users            User[]   @relation("User_role")
 }
 
 model Post {
