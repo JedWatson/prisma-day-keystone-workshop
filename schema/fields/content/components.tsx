@@ -128,4 +128,35 @@ export const componentBlocks = {
       );
     },
   }),
+  poll: component({
+    component: ({ poll }) => {
+      if (!poll.value)
+        return (
+          <NotEditable>
+            <div>No Poll Selected</div>
+          </NotEditable>
+        );
+      return (
+        <NotEditable>
+          <h2>{poll.value.label}</h2>
+          <ul>
+            {poll.value.data.answers.map((answer: any) => {
+              return (
+                <li>
+                  {answer.label} ({answer.voteCount || 0} answers)
+                </li>
+              );
+            })}
+          </ul>
+        </NotEditable>
+      );
+    },
+    label: 'Poll',
+    props: {
+      poll: fields.relationship<'one'>({
+        label: 'Poll',
+        relationship: 'poll',
+      }),
+    },
+  }),
 };
