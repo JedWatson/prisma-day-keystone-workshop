@@ -36,6 +36,8 @@ model Post {
   publishedDate DateTime?
   author        User?     @relation("Post_author", fields: [authorId], references: [id])
   authorId      String?   @map("author")
+  intro         Json?
+  content       Json?
 
   @@index([authorId])
 }

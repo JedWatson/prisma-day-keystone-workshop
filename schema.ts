@@ -6,8 +6,11 @@ import {
   timestamp,
   password,
 } from '@keystone-next/fields';
+import { document } from '@keystone-next/fields-document';
 import { createSchema, list } from '@keystone-next/keystone/schema';
 import { rules } from './schema/access';
+
+import { componentBlocks } from './schema/fields/content/components';
 
 function defaultSlug({ context, originalInput }: any) {
   const date = new Date();
@@ -68,6 +71,22 @@ export const lists = createSchema({
         defaultValue: defaultTimestamp,
       }),
       author: relationship({ ref: 'User.authoredPosts' }),
+      intro: document({
+        formatting: {
+          inlineMarks: true,
+          blockTypes: true,
+          listTypes: true,
+          softBreaks: true,
+        },
+        links: true,
+      }),
+      content: document({
+        formatting: true,
+        links: true,
+        dividers: true,
+        componentBlocks,
+        ui: { views: require.resolve('./schema/fields/content/components') },
+      }),
     },
   }),
 });

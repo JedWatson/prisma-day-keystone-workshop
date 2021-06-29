@@ -313,6 +313,16 @@ type Post {
   status: String
   publishedDate: String
   author: User
+  intro: Post_intro_DocumentField
+  content: Post_content_DocumentField
+}
+
+type Post_intro_DocumentField {
+  document(hydrateRelationships: Boolean! = false): JSON!
+}
+
+type Post_content_DocumentField {
+  document(hydrateRelationships: Boolean! = false): JSON!
 }
 
 input PostWhereInput {
@@ -410,6 +420,8 @@ input PostUpdateInput {
   status: String
   publishedDate: String
   author: UserRelateToOneInput
+  intro: JSON
+  content: JSON
 }
 
 input UserRelateToOneInput {
@@ -430,6 +442,8 @@ input PostCreateInput {
   status: String
   publishedDate: String
   author: UserRelateToOneInput
+  intro: JSON
+  content: JSON
 }
 
 input PostsCreateInput {

@@ -1,16 +1,22 @@
 import { Container } from '../components/ui/layout';
 import { H1 } from '../components/ui/typography';
 import { fetchGraphQL, gql } from '../utils';
+import { DocumentRenderer } from '../schema/fields/content/renderers';
 
 export default function Home({ posts }: any) {
   return (
     <Container>
       <H1>Hello World</H1>
-      <ul>
+      <div>
         {posts.map((post: any) => (
-          <li>{post.title}</li>
+          <div key={post.id}>
+            <h2>{post.title}</h2>
+            {post.intro ? (
+              <DocumentRenderer document={post.intro.document} />
+            ) : null}
+          </div>
         ))}
-      </ul>
+      </div>
     </Container>
   );
 }
@@ -24,6 +30,9 @@ export async function getStaticProps() {
         status
         author {
           name
+        }
+        intro {
+          document
         }
       }
     }
